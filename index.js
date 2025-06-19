@@ -6,6 +6,7 @@ const cors = require('cors')
 require('dotenv').config()
 
 const userDatabase = {}
+const exerciseLogs = {}
 
 app.use(cors())
 app.use(express.json())
@@ -66,28 +67,36 @@ app.get('/api/users', (req, res) => {
 app.post('/api/users/:_id/exercises', (req, res) => {
   const { description, duration, date } = req.body;
   const _id = req.params._id;
-  // Validate user
+
   if (!userDatabase[_id]) {
     return res.status(400).json({ error: 'User does not exist' });
   }
-  // Use current date if not provided
+
   const exerciseDate = date ? new Date(date) : new Date();
-  // Ensure it's a valid date
+
   if (isNaN(exerciseDate)) {
     return res.status(400).json({ error: 'Invalid date format' });
   }
+
   const formattedDate = exerciseDate.toDateString();
-  // Create exercise object (optional: save to a separate database)
+
   const exercise = {
-    _id,
-    username: userDatabase[_id],
     description,
     duration: parseInt(duration),
     date: formattedDate
   };
 
-  // Return the exercise (you can also store it in a DB if needed)
-  res.json(exercise);
+  // Save exercise log
+  if (!exerciseLogs[_id]) {
+    exerciseLogs[_id] = [];
+  }
+  exerciseLogs[_id].push(exercise);
+
+  res.json({
+    _id,
+    username: userDatabase[_id],
+    ...exercise
+  });
 });
 
 
